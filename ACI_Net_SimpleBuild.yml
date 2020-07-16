@@ -1,0 +1,132 @@
+---
+- hosts: aci
+  gather_facts: yes
+  connection: network_cli
+  become: yes
+  become_method: enable
+  ignore_errors: yes
+
+  tasks:
+  - name: account $USER
+    shell: "echo $USER"
+    register: play_user
+    changed_when: false
+    check_mode: no
+
+  - debug:
+      msg: "Running as '{{ play_user.stdout }}'"
+
+  - name: obtain login credentials
+    include_vars: "auth/secrets.yml"
+
+  - name: Set Username and Password
+    set_fact:
+      username: "{{ lab_creds['username'] }}"
+      password: "{{ lab_creds['password'] }}"
+
+  - name: new variable with current date time
+    set_fact: time_stamp="{{lookup('pipe','date \"+%m-%d-%Y_%H%M\"')}}"
+
+  - name: Set reference var
+    set_fact:
+      reference: "{{ time_stamp }}_{{ play_user.stdout }}"
+
+  - name: Load APIC Variable File
+    include_vars: "hostvars/cisco/aci/{{ inventory_hostname }}.yml"
+
+  - name: Pre-Build Snapshot Task
+    aci_config_snapshot:
+      host: "{{ aci_apic.ipv4 }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      validate_certs: no
+      state: present
+      export_policy: AnsibleACI_SimpleNetBuild-{{ inventory_hostname }}-{{ reference }}
+    delegate_to: localhost
+    register: result_snapshot
+    when: (continue_build.user_input == "y")
+
+  - name: TN Task
+    aci_tenant:
+      host: "{{ aci_apic.ipv4 }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      validate_certs: no
+      tenant: "{{ item.name }}"
+      description: "{{ reference }}"
+      state: "{{ item.state }}"
+    delegate_to: localhost
+    register: result_tn
+    when: (item.state == "present" or item.state == "absent" or item.state == "query") and 
+          (continue_build.user_input == "y")
+    with_items:
+      - "{{ tns }}"
+
+  - name: VRF Task Config
+    aci_vrf:
+      host: "{{ aci_apic.ipv4 }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      validate_certs: no
+      tenant: "{{ item.tenant }}"
+      vrf: "{{ item.name }}"
+      description: "{{ reference }}"
+      state: "{{ item.state }}"
+      policy_control_preference: "{{ item.policy_control_preference }}"
+      policy_control_direction: "{{ item.policy_control_direction }}"
+    delegate_to: localhost
+    register: result_vrf
+    when: (item.state == "present" or item.state == "absent" or item.state == "query") and 
+          (continue_build.user_input == "y")
+    with_items:
+      - "{{ vrfs }}"
+
+  - name: Generate Output File
+    template:
+      src=template/net_build_output.j2
+      dest=output/build_output/ACI-Info-{{ time_stamp }}SimpleNetBuild-{{ aci_apic.hostname }}.yml
+
+  - name: Change current present states to ignore
+    replace:
+      path: hostvars/cisco/aci/{{ inventory_hostname }}.yml"
+      regexp: 'state: present'
+      replace: 'state: ignore'
+      before: '#EOS'
+
+  - name: Change current absent states to ignore
+    replace:
+      path: hostvars/cisco/aci/{{ inventory_hostname }}.yml"
+      regexp: 'state: absent'
+      replace: 'state: ignore'
+      before: '#EOS'
+
+  - name: Email Report Recipient(s).
+    pause:
+      prompt: "Email Playbook Report? (y/n)"
+      echo: yes
+    register: mail_prompt
+
+  - name: Email Report Recipient(s).
+    pause:
+      prompt: "Target Email Address(es). Separate multiple addresses by commas"
+      echo: yes
+    register: mail_recipient
+    when: (mail_prompt.user_input == "y")
+
+  - name: Sending Playbook Build Output File
+    mail:
+      host: 172.16.0.1
+      port: 25
+      from: ansible-do-not-reply@example.com
+      subject: ACI_SimpleNetBuild_Report_{{ inventory_hostname }}
+      body: "See atached report"
+      attach: "output/build_output/ACI-Info-{{ time_stamp }}NetBuild-{{ aci_apic.hostname }}_{{ reference }}.yml"
+      to: "{{ mail_recipient }}"
+    when: (mail_prompt.user_input == "y") and
+          (mail_recipient is defined)
+      
+  - name: Clean Playbook Build Output File
+    file:
+      path: output/build_output/ACI-Info-*
+      state: absent
+...

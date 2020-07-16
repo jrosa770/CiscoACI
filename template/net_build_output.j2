@@ -1,0 +1,20 @@
+# Build ID
+{{ reference_prompt }}
+
+# Playbook Initiator
+{{ play_user.stdout }}
+
+# Snapshot Output
+{{ result_snapshot | to_nice_yaml }}
+
+# Tenant Output
+{{ result_tn | to_nice_yaml }}
+
+# VRF Output
+{{ result_vrf | to_nice_yaml }}
+
+# Contracts Output
+{{ result_contract | to_nice_yaml }}
+
+# Contract Subject Output
+{{ result_consubject | to_nice_yaml }}

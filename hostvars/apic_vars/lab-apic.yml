@@ -1,0 +1,324 @@
+---
+aci_apic:
+  hostname: 'lab-apic'
+  location_domain_name: "changehealthcare.com"
+  ipv4: 10.100.1.1
+  mask: 255.255.255.0
+  gw: 10.11.1.254
+
+# Network Build Section
+tns:
+  - name: 'DevQA1'
+    state: ignore
+
+  - name: 'common'
+    state: ignore
+
+  - name: 'DevQA2'
+    state: ignore
+vrfs:
+  - name: 'DQA01'
+    tenant: 'DevQA1'
+    policy_control_preference: enforced
+    policy_control_direction: ingress
+    state: ignore
+
+  - name: 'Shared_Services_VRF'
+    tenant: 'common'
+    policy_control_preference: enforced
+    policy_control_direction: ingress
+    state: ignore
+
+  - name: 'DQA02'
+    tenant: 'DevQA2'
+    policy_control_preference: enforced
+    policy_control_direction: ingress
+    state: ignore
+contracts: 
+  - name: 'wan-permit-all'
+    tenant: 'DevQA1'
+    state: ignore
+    scope: global
+
+  - name: 'wan-permit-all'
+    tenant: 'common'
+    state: ignore
+    scope: global
+
+  - name: 'wan-permit-all'
+    tenant: 'DevQA2'
+    state: ignore
+    scope: global
+contract_subjects:
+  - name: 'permit-all'
+    tenant: 'DevQA1'
+    contract: 'wan-permit-all'
+    reverse_filter: True
+    priority: unspecified
+    dscp: unspecified
+    state: ignore
+
+  - name: 'permit-all'
+    tenant: 'DevQA2'
+    contract: 'wan-permit-all'
+    reverse_filter: True
+    priority: unspecified
+    dscp: unspecified
+    state: ignore
+
+  - name: 'permit-all'
+    tenant: 'common'
+    contract: 'wan-permit-all'
+    reverse_filter: True
+    priority: unspecified
+    dscp: unspecified
+    state: ignore
+#EOS
+# Ops Build Section
+aps:
+  - name: 'APP0101_10.1.0.0-AP'
+    tenant: 'DevQA1'
+    state: ignore
+
+  - name: 'APP0102_10.2.0.0-AP'
+    tenant: 'DevQA2'
+    state: ignore
+
+  - name: 'APPV2_a-AP'
+    tenant: 'common'
+    state: ignore
+bds:
+  - name: 'APP0101_APP-BD'
+    bd_type: ethernet
+    enable_routing: yes
+    enable_multicast: no
+    tenant: 'DevQA1'
+    vrf: 'DQA01'
+    state: ignore
+
+  - name: 'APP0101_PRES-BD'
+    bd_type: ethernet
+    enable_routing: yes
+    enable_multicast: no
+    tenant: 'DevQA1'
+    vrf: 'DQA01'
+    state: ignore
+
+  - name: 'APP0101_DB-BD'
+    bd_type: ethernet
+    enable_routing: yes
+    enable_multicast: no
+    tenant: 'DevQA1'
+    vrf: 'DQA01'
+    state: ignore
+
+  - name: 'APPV2-SSR-APP-BD'
+    bd_type: ethernet
+    enable_routing: yes
+    enable_multicast: no
+    tenant: 'common'
+    vrf: 'Shared_Services_VRF'
+    state: ignore
+
+  - name: 'APPV2-SSR-WEB-BD'
+    bd_type: ethernet
+    enable_routing: yes
+    enable_multicast: no
+    tenant: 'common'
+    vrf: 'Shared_Services_VRF'
+    state: ignore
+
+  - name: 'APPV2-SSR-DB-BD'
+    bd_type: ethernet
+    enable_routing: yes
+    enable_multicast: no
+    tenant: 'common'
+    vrf: 'Shared_Services_VRF'
+    state: ignore
+
+  - name: 'APP0102_APP-BD'
+    bd_type: ethernet
+    enable_routing: yes
+    enable_multicast: no
+    tenant: 'DevQA2'
+    vrf: 'DQA02'
+    state: ignore
+
+  - name: 'APP0102_PRES-BD'
+    bd_type: ethernet
+    enable_routing: yes
+    enable_multicast: no
+    tenant: 'DevQA2'
+    vrf: 'DQA02'
+    state: ignore
+
+  - name: 'APP0102_DB-BD'
+    bd_type: ethernet
+    enable_routing: yes
+    enable_multicast: no
+    tenant: 'DevQA2'
+    vrf: 'DQA02'
+    state: ignore
+bd_subnets:
+  - name: 'APP0101_APP_10.1.0.0_28-BD_SUBNET'
+    tenant: 'DevQA1'
+    ap: 'APP0101_10.1.0.0-AP'
+    bd: 'APP0101_APP-BD'
+    subnet_name: 'APP0101_APP_10.1.0.0_28-BD_SUBNET'
+    gateway: '10.1.0.1'
+    mask: '28'
+    scope: 'public'
+    state: ignore
+
+  - name: 'APP0101_PRES_10.1.0.16_28-BD_SUBNET'
+    tenant: 'DevQA1'
+    ap: 'APP0101_10.1.0.0-AP'
+    bd: 'APP0101_PRES-BD'
+    subnet_name: 'APP0101_PRES_10.1.0.16_28-BD_SUBNET'
+    gateway: '10.1.0.17'
+    mask: '28'
+    scope: 'public'
+    state: ignore
+
+  - name: 'APP0101_DB_10.1.0.32_28-BD_SUBNET'
+    tenant: 'DevQA1'
+    ap: 'APP0102_10.1.0.0-AP'
+    bd: 'APP0102_DB-BD'
+    subnet_name: 'APP0101_DB_10.1.0.32_28-BD_SUBNET'
+    gateway: '10.1.0.33'
+    mask: '28'
+    scope: private
+    state: ignore
+
+  - name: 'APPV2-APP-10.0.254.48-28-BD_SUBNET'
+    tenant: 'common'
+    ap: 'APPV2-AP'
+    bd: 'APPV2-SSR-APP-BD'
+    subnet_name: 'APPV2-APP-10.0.254.48-28-BD_SUBNET'
+    gateway: '10.0.254.49'
+    mask: '28'
+    scope: 'public'
+    state: ignore
+
+  - name: 'APPV2-WEB-10.0.254.64-28-BD_SUBNET'
+    tenant: 'common'
+    ap: 'APPV2-AP'
+    bd: 'APPV2-SSR-WEB-BD'
+    subnet_name: 'APPV2-WEB-10.0.254.64-28-BD_SUBNET'
+    gateway: '10.0.254.65'
+    mask: '28'
+    scope: 'public'
+    state: ignore
+
+  - name: 'APPV2-DB-10.0.254.80-28-BD_SUBNET'
+    tenant: 'common'
+    ap: 'APPV2-AP'
+    bd: 'APPV2-SSR-DB-BD'
+    subnet_name: 'APPV2-DB-10.0.254.80-28-BD_SUBNET'
+    gateway: '10.0.254.81'
+    mask: '28'
+    scope: 'public'
+    state: ignore
+
+  - name: 'APP0102_APP_10.2.0.0_28-BD_SUBNET'
+    tenant: 'DevQA2'
+    ap: 'APP0102_10.2.0.0-AP'
+    bd: 'APP0102_APP-BD'
+    subnet_name: 'APP0102_APP_10.2.0.0_28-BD_SUBNET'
+    gateway: '10.2.0.1'
+    mask: '28'
+    scope: 'public'
+    state: ignore
+
+  - name: 'APP0102_PRES_10.2.0.16_28-BD_SUBNET'
+    tenant: 'DevQA2'
+    ap: 'APP0102_10.2.0.0-AP'
+    bd: 'APP0102_PRES-BD'
+    subnet_name: 'APP0101_PRES_10.2.0.16_28-BD_SUBNET'
+    gateway: '10.2.0.17'
+    mask: '28'
+    scope: 'public'
+    state: ignore
+
+  - name: 'APP0101_DB_10.1.0.32_28-BD_SUBNET'
+    tenant: 'DevQA1'
+    ap: 'APP0101_10.1.0.0-AP'
+    bd: 'APP0101_DB-BD'
+    subnet_name: 'APP0101_DB_10.1.0.32_28-BD_SUBNET'
+    gateway: '10.1.0.33'
+    mask: '28'
+    scope: 'private'
+    state: ignore
+epgs:
+  - name: 'APP0101_APP_10.1.0.0_28-EPG'
+    tenant: 'DevQA1'
+    ap: 'APP0101_10.1.0.0-AP'
+    bd: 'APP0101_APP-BD'
+    contract: 'wan-permit-all'
+    contract_type: 'provider'
+    state: ignore
+
+  - name: 'PRES0101_PRES_10.1.0.16_28-EPG'
+    tenant: 'DevQA1'
+    ap: 'APP0101_10.1.0.0-AP'
+    bd: 'APP0101_PRES-BD'
+    contract: 'wan-permit-all'
+    contract_type: 'provider'
+    state: ignore
+
+  - name: 'DB0101_DB_10.1.0.32_28-EPG'
+    tenant: 'DevQA1'
+    ap: 'APP0101_10.1.0.0-AP'
+    bd: 'APP0101_DB-BD'
+    contract: 'wan-permit-all'
+    contract_type: 'provider'
+    state: ignore
+
+  - name: 'APPV2-APP-10.0.254.48-28-EPG'
+    tenant: 'common'
+    ap: 'APPV2-AP'
+    bd: 'APPV2-SSR-APP-BD'
+    contract: 'wan-permit-all'
+    contract_type: 'provider'
+    state: ignore
+
+  - name: 'PRES0102_PRES_10.2.0.16_28-EPG'
+    tenant: 'common'
+    ap: 'APPV2-AP'
+    bd: 'APPV2-SSR-WEB-BD'
+    contract: 'wan-permit-all'
+    contract_type: 'provider'
+    state: ignore
+
+  - name: 'DB0102_DB_10.2.0.32_28-EPG'
+    tenant: 'common'
+    ap: 'APPV2-AP'
+    bd: 'APPV2-SSR-DB-BD'
+    contract: 'wan-permit-all'
+    contract_type: 'provider'
+    state: ignore
+
+  - name: 'APP0102_APP_10.2.0.0_28-EPG'
+    tenant: 'DevQA2'
+    ap: 'APP0102_10.2.0.0-AP'
+    bd: 'APP0102_APP-BD'
+    contract: 'wan-permit-all'
+    contract_type: 'provider'
+    state: ignore
+
+  - name: 'PRES0102_PRES_10.2.0.16_28-EPG'
+    tenant: 'DevQA2'
+    ap: 'APP0102_10.2.0.0-AP'
+    bd: 'APP0102_PRES-BD'
+    contract: 'wan-permit-all'
+    contract_type: 'provider'
+    state: ignore
+
+  - name: 'DB0102_DB_10.2.0.32_28-EPG'
+    tenant: 'DevQA2'
+    ap: 'APP0102_10.2.0.0-AP'
+    bd: 'APP0102_DB-BD'
+    contract: 'wan-permit-all'
+    contract_type: 'provider'
+    state: ignore
+#EOF

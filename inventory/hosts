@@ -1,0 +1,13 @@
+[all:vars]
+ansible_python_interpreter=/usr/bin/python
+ansible_connection = local
+
+[aci:children]
+aci_prod
+aci_dev
+
+[aci_dev]
+lab-apic ansible_host=10.100.1.1
+
+[aci_prod]
+prod-apic ansible_host=10.200.1.1
