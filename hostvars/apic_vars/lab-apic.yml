@@ -1,10 +1,10 @@
 ---
 aci_apic:
   hostname: 'lab-apic'
-  location_domain_name: "changehealthcare.com"
+  location_domain_name: "example.com"
   ipv4: 10.100.1.1
   mask: 255.255.255.0
-  gw: 10.11.1.254
+  gw: 10.100.1.254
 
 # Network Build Section
 tns:
