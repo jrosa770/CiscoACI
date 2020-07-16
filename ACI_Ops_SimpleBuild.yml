@@ -172,11 +172,6 @@
     when: (mail_prompt.user_input == "y") and
           (mail_recipient is defined)
 
-  - name: Cleanup CSV File
-    file:
-      path: input/simple-{{ reference }}.csv
-      state: absent
-      
   - name: Clean Playbook Build Output File
     file:
       path: output/build_output/ACI-Info-{{ time_stamp }}SimpleOpsBuild-{{ aci_apic.hostname }}.yml
