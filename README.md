@@ -10,6 +10,8 @@ The `states` need to be set to present, absent or query for playbook task activa
 
 Example:
 
+Hostvar File: lab-apic.yml
+
 ```yml
 aci_apic:
   hostname: 'lab-apic'
@@ -32,6 +34,9 @@ tns:
 Playbook Task:
 
 ```yml
+  - name: Load APIC Variable File
+    include_vars: "hostvars/{{ inventory_hostname }}.yml"
+
   - name: TN Task
     aci_tenant:
       host: "{{ aci_apic.ipv4 }}"

@@ -32,7 +32,7 @@
       reference: "{{ time_stamp }}_{{ play_user.stdout }}"
 
   - name: Load APIC Variable File
-    include_vars: "hostvars/cisco/aci/{{ inventory_hostname }}.yml"
+    include_vars: "hostvars/{{ inventory_hostname }}.yml"
 
   - name: Pre-Build Snapshot Task
     aci_config_snapshot:
