@@ -58,8 +58,7 @@
       state: "{{ item.state }}"
     delegate_to: localhost
     register: result_ap
-    when: (item.state == "present" or item.state == "absent" or item.state == "query") and
-          (continue_build.user_input == "y")
+    when: (item.state == "present" or item.state == "absent" or item.state == "query")
     with_items:
       - "{{ aps }}"
 
@@ -79,8 +78,7 @@
       state: "{{ item.state }}"
     delegate_to: localhost
     register: result_bd
-    when: (item.state == "present" or item.state == "absent" or item.state == "query") and 
-          (continue_build.user_input == "y")
+    when: (item.state == "present" or item.state == "absent" or item.state == "query")
     with_items:
       - "{{ bds }}"
 
@@ -100,8 +98,7 @@
       state: "{{ item.state }}"
     delegate_to: localhost
     register: result_bd_subnet
-    when: (item.state == "present" or item.state == "absent" or item.state == "query") and 
-          (continue_build.user_input == "y")
+    when: (item.state == "present" or item.state == "absent" or item.state == "query")
     with_items:
       - "{{ bd_subnets }}"
 
@@ -119,8 +116,7 @@
       state: "{{ item.state }}"
     delegate_to: localhost
     register: result_epg
-    when: (item.state == "present" or item.state == "absent" or item.state == "query") and 
-          (continue_build.user_input == "y")
+    when: (item.state == "present" or item.state == "absent" or item.state == "query")
     with_items:
       - "{{ epgs }}"
 

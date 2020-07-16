@@ -57,8 +57,7 @@
       state: "{{ item.state }}"
     delegate_to: localhost
     register: result_tn
-    when: (item.state == "present" or item.state == "absent" or item.state == "query") and 
-          (continue_build.user_input == "y")
+    when: (item.state == "present" or item.state == "absent" or item.state == "query")
     with_items:
       - "{{ tns }}"
 
@@ -76,8 +75,7 @@
       policy_control_direction: "{{ item.policy_control_direction }}"
     delegate_to: localhost
     register: result_vrf
-    when: (item.state == "present" or item.state == "absent" or item.state == "query") and 
-          (continue_build.user_input == "y")
+    when: (item.state == "present" or item.state == "absent" or item.state == "query")
     with_items:
       - "{{ vrfs }}"
 
