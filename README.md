@@ -6,7 +6,7 @@ Utilizes Host based specific variables as inputs for the playbook.
 
 This format is based on the [My All in One, Device Specific YAML File for Ansible](https://github.com/jrosa770/ansible_device_var) hostvar scheme.
 
-The `states` need to be set to present, absent or query for playbook task activation
+The `state` need to be set to present, absent or query for playbook task activation
 
 Example:
 
