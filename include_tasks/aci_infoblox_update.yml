@@ -1,0 +1,147 @@
+- name: Action Prompt
+  pause:
+    prompt: "Is {{ reference }} a network add (a) or delete (d)? (a/d)"
+    echo: yes
+  register: action
+  when: (csv_import.user_input == "n")
+
+- name: Copy file with owner and permissions
+  copy:
+    src: input/build_vars.csv
+    dest: input/{{ reference }}.csv
+    mode: '0666'
+  when: (csv_import.user_input == "n") and
+        (action.user_input is defined)
+
+- name: Read CSV for Build
+  read_csv:
+    path: input/{{ reference }}.csv
+  register: csvfile_ap
+#  when: (csv_import.user_input == "n") and
+#        (action.user_input is defined)
+
+- name: Lab or Production based Infoblox Update Prompt
+  pause:
+    prompt: "Lab (l) or Production (p) Infoblox? (l/p)"
+    echo: yes
+  register: lab_prod_prompt
+
+- name: NIOS vars call LAB
+  include_vars: "vars/infoblox/nios_lab.yml"
+  when: (lab_prod_prompt.user_input == "l")
+
+- name: NIOS vars call PROD
+  include_vars: "vars/infoblox/nios_prod.yml"
+  when: (lab_prod_prompt.user_input == "p")
+
+- name: Load Playbook specific Variable File
+  include_vars: vars/playvars/csv.yml
+  
+- name: Generate Infoblox YAML build Vars
+  template:
+    src: "template/aci_nios_process-vars.j2"
+    dest: "vars/infoblox/nios_{{ reference }}.yml"
+  when: (csvfile_ap.list.0.GWFQDN|length > 0)
+
+- name: Generate Infoblox YAML build Vars
+  template:
+    src: "template/aci_nios_process-vars-null-dns.j2"
+    dest: "vars/infoblox/nios_{{ reference }}.yml"
+  when: (csvfile_ap.list.0.GWFQDN|length == 0)
+
+- name: Cat Processed NIOS VARS
+  command: "cat vars/infoblox/nios_{{ reference }}.yml"
+  register: cat_nios_vars
+
+- name: Outpout Processed NIOS VARS
+  debug:
+    msg: "Review Processed NIOS VARS"
+
+- name: Outpout Processed NIOS VARS
+  debug:
+    msg: "{{ cat_nios_vars.stdout }}"
+
+- name: Update Infoblox with BD Subnet Data
+  pause:
+    prompt: "Update Infoblox? (y/n)"
+    echo: yes
+  register: continue_nios
+
+- name: Load Playbook specific Variable File
+  include_vars: "vars/infoblox/nios_{{ reference }}.yml"
+  when: (continue_nios.user_input == "y")
+
+- name: Add an ipv4 Network ACI CSV Build
+  nios_network:
+    network: "{{ item.network }}"
+    comment: "{{ reference }}-{{ time_stamp }}"
+    state: present
+    provider: "{{ nios_provider }}"
+  delegate_to: localhost
+  register: result_nios_network
+  when: (action.user_input is not defined) and
+        (continue_nios.user_input == "y")
+  with_items:
+    - "{{ nios_process }}"
+
+- name: Add an ipv4 Network ACI HostVar Build
+  nios_network:
+    network: "{{ item.network }}"
+    comment: "{{ reference }}-{{ time_stamp }}"
+    state: present
+    provider: "{{ nios_provider }}"
+  delegate_to: localhost
+  register: result_nios_network
+  when: (action.user_input is defined) and
+        (action.user_input == "a" and continue_nios.user_input == "y")
+  with_items:
+    - "{{ nios_process }}"
+
+- name: Delete an ipv4 Network ACI HostVar Build
+  nios_network:
+    network: "{{ item.network }}"
+    comment: "{{ reference }}-{{ time_stamp }}"
+    state: absent
+    provider: "{{ nios_provider }}"
+  delegate_to: localhost
+  register: result_nios_network
+  when: (action.user_input is defined) and
+        (action.user_input == "d" and continue_nios.user_input == "y")
+  with_items:
+    - "{{ nios_process }}"
+
+- name: Add an ipv4 host record ACI CSV Build Static GWFQDN
+  nios_host_record:
+    name: "{{ item.hostname }}"
+    dns: false
+    ipv4:
+      - address: "{{ item.target_ip }}"
+    comment: "{{ reference }}-{{ time_stamp }}"
+    state: present
+    provider: "{{ nios_provider }}"
+  delegate_to: localhost
+  register: result_nios_host
+  when: (action.user_input is not defined) and 
+        (continue_nios.user_input == "y")
+  with_items:
+    - "{{ nios_process }}"
+
+- name: Add an ipv4 host record ACI HostVar Build Static GWFQDN
+  nios_host_record:
+    name: "{{ item.hostname }}"
+    dns: false
+    ipv4:
+      - address: "{{ item.target_ip }}"
+    comment: "{{ reference }}-{{ time_stamp }}"
+    state: present
+    provider: "{{ nios_provider }}"
+  delegate_to: localhost
+  register: result_nios_host
+  when: (action.user_input is defined) and
+        (action.user_input == "a" and continue_nios.user_input == "y")
+  with_items:
+    - "{{ nios_process }}"
+
+- debug:
+    msg: "Updates will require Manual Update in Infoblox Grid Manager"
+  when: (continue_nios.user_input == "n")

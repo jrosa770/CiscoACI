@@ -1,0 +1,16 @@
+# Insert after EPG Tasks or before final Reporting Tasks
+# Infoblox Integration
+  - name: Update Infoblox with BD Subnet Data
+    pause:
+      prompt: "Update Infoblox with BD Subnet Data? (y/n)"
+      echo: yes
+    register: infoblox_update
+
+  - name: Update "{{ inventory_hostname }}" from CSV
+    include: include_task/aci_infoblox_update.yml
+    when: (infoblox_update.user_input == "y")
+
+  - debug:
+      msg: "Updates will require Manual Update in Infoblox Grid Manager"
+    when: (infoblox_update.user_input == "n")
+# Infoblox Integration

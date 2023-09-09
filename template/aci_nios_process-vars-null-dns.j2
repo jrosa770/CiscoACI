@@ -1,0 +1,12 @@
+---
+nios_process:
+{% for item in csvfile_bd_epg.split("\n") %}
+{%   if loop.index != 1 %}
+{%     set list = item.split(",") %}
+  - name: "{{ reference }}"
+    network: "{{ list[4]|trim() }}/{{ list[6]|trim() }}"
+    hostname: "{{ list[4]|trim() }}_{{ list[6]|trim() }}-BD_SUBNET-GW"
+    target_ip: '{{ list[5]|trim() }}'
+
+{%   endif %}
+{% endfor %}
